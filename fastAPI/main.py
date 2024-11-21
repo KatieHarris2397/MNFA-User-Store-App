@@ -46,9 +46,9 @@ class User(BaseModel):
 @app.post("/api/user/", response_model=User)
 async def create_user(user: User = Body(...)):
     # Add user to MongoDB
-    new_user = await mongo_collection.insert_one(user.model_dump(by_alias=True, exclude=["id"]))
+    new_user = mongo_collection.insert_one(user.model_dump(by_alias=True, exclude=["id"]))
 
-    created_user = await mongo_collection.find_one({"_id": new_user.inserted_id})
+    created_user = mongo_collection.find_one({"_id": new_user.inserted_id})
     
     # Add user to Neo4j graph
     with neo4j_driver.session() as session:
@@ -61,7 +61,7 @@ async def create_user(user: User = Body(...)):
 @app.get("/api/user/{user_email}")
 async def get_user(user_email: str):
     # Fetch user from MongoDB
-    user = await mongo_collection.find_one({"email": user_email})
+    user = mongo_collection.find_one({"email": user_email})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
