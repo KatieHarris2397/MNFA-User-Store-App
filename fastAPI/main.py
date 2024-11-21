@@ -8,10 +8,8 @@ from pyobjectID import MongoObjectId
 
 app = FastAPI()
 
-class User(BaseModel):
+class UserId(BaseModel):
     id: MongoObjectId
-    name: str
-    email: str
 
 # MongoDB Configuration
 MONGO_USERNAME = os.getenv("MONGODB_USERNAME")
@@ -31,14 +29,14 @@ neo4j_driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD)
 @app.post("/api/user/")
 async def create_user(user: dict):
     # Add user to MongoDB
-    userObj = User(mongo_collection.insert_one(user))
-    user["id"] = userObj.id
+    user_id = UserId(mongo_collection.insert_one(user).inserted_id)
+    user["id"] = user_id.id
     
     # Add user to Neo4j graph
     with neo4j_driver.session() as session:
         session.run(
             "CREATE (u:User {id: $id, name: $name, email: $email})",
-            id=userObj.id, name=user.get("name"), email=user.get("email")
+            id=user_id.id, name=user.get("name"), email=user.get("email")
         )
     return {"message": "User created successfully", "user": user}
 
