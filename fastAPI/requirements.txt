@@ -3,4 +3,4 @@ uvicorn
 pymongo
 neo4j
 pydantic
-pydantic_extra_types
+pyobjectid

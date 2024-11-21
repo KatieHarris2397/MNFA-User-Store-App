@@ -4,7 +4,7 @@ from neo4j import GraphDatabase
 
 import os
 from pydantic import BaseModel
-from pydantic_extra_types import MongoObjectId
+from pyobjectID import MongoObjectId
 
 app = FastAPI()
 
