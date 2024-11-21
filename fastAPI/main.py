@@ -54,7 +54,7 @@ async def create_user(user: User = Body(...)):
     with neo4j_driver.session() as session:
         session.run(
             "CREATE (u:User {name: $name, email: $email})",
-            name=user.get("name"), email=user.get("email")
+            name=user.model_dump(by_alias=True).name, email=user.model_dump(by_alias=True).email
         )
     return created_user
 
