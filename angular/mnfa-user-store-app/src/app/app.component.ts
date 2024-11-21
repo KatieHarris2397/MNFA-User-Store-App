@@ -9,7 +9,7 @@ import { ApiService } from './services/api.service';
       <input [(ngModel)]="user.name" name="name" placeholder="Name" required />
       <input [(ngModel)]="user.email" name="email" placeholder="Email" required />
       <button type="submit">Create User</button>
-      <button (click)="getUser()">Get User</button>
+      <button (click)="getUser($event)">Get User</button>
     </form>
     <pre>{{ userDetails | json }}</pre>
   `,
@@ -25,7 +25,8 @@ export class AppComponent {
     this.apiService.createUser(this.user).subscribe((res) => console.log(res));
   }
 
-  getUser() {
+  getUser(event: Event) {
+    event.preventDefault();
     this.apiService.getUser(this.user.email || '').subscribe((res) => {
       this.userDetails = res;
     });
