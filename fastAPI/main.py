@@ -5,7 +5,7 @@ from neo4j import GraphDatabase
 import os
 import pydantic
 from bson import ObjectId
-pydantic.json.ENCODERS_BY_TYPE[ObjectId]=str
+pydantic.deprecated.json.ENCODERS_BY_TYPE[ObjectId]=str
 
 app = FastAPI()
 
