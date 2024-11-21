@@ -1,16 +1,25 @@
-from fastapi import FastAPI, HTTPException
-from pymongo import MongoClient
+import os
+from typing import Optional, List
+
+from fastapi import FastAPI, Body, HTTPException, status
+from fastapi.responses import Response
+from pydantic import ConfigDict, BaseModel, Field, EmailStr
+from pydantic.functional_validators import BeforeValidator
+
+from typing_extensions import Annotated
+
+from bson import ObjectId
+from pymongo import MongoClient, ReturnDocument
 from neo4j import GraphDatabase
 
 import os
 
-app = FastAPI()
+app = FastAPI(
+    title="MNFA User Store App",
+)
 
 # MongoDB Configuration
-MONGO_USERNAME = os.getenv("MONGODB_USERNAME")
-MONGO_PASSWORD = os.getenv("MONGODB_PASSWORD")
-MONGO_HOST = os.getenv("MONGODB_HOST")
-MONGO_URI = "mongodb://" + MONGO_USERNAME + ":" + MONGO_PASSWORD + "@" + MONGO_HOST + "/"
+MONGO_URI = os.getenv("MONGODB_URL")
 mongo_client = MongoClient(MONGO_URI)
 mongo_db = mongo_client[os.getenv("MONGODB_DB")]
 mongo_collection = mongo_db["users"]
@@ -21,23 +30,38 @@ NEO4J_USER = os.getenv("NEO4J_USERNAME")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 neo4j_driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
-@app.post("/api/user/")
-async def create_user(user: dict):
+# Represents an ObjectId field in the mongo database.
+# It will be represented as a `str` on the model so that it can be serialized to JSON.
+PyObjectId = Annotated[str, BeforeValidator(str)]
+
+class User(BaseModel):
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)
+    name: str = Field(...)
+    email: EmailStr = Field(...)
+
+    class Config:
+        allow_population_by_field_name = True
+        json_encoders = {ObjectId: str}
+
+@app.post("/api/user/", response_model=User)
+async def create_user(user: User = Body(...)):
     # Add user to MongoDB
-    userObj = mongo_collection.insert_one(user)
+    new_user = await mongo_collection.insert_one(user.model_dump(by_alias=True, exclude=["id"]))
+
+    created_user = await mongo_collection.find_one({"_id": new_user.inserted_id})
     
     # Add user to Neo4j graph
     with neo4j_driver.session() as session:
         session.run(
-            "CREATE (u:User {name: $name, email: $email})",
-            name=user.get("name"), email=user.get("email")
+            "CREATE (u:User {id: $id, name: $name, email: $email})",
+            id= created_user.id, name=user.get("name"), email=user.get("email")
         )
-    return {"message": "User created successfully", "user": user}
+    return created_user
 
 @app.get("/api/user/{user_email}")
 async def get_user(user_email: str):
     # Fetch user from MongoDB
-    user = mongo_collection.find_one({"email": user_email})
+    user = await mongo_collection.find_one({"email": user_email})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
