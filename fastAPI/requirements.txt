@@ -3,4 +3,3 @@ uvicorn
 pymongo
 neo4j
 pydantic
-bson
