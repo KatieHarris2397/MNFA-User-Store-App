@@ -60,9 +60,9 @@ async def create_user(user: User = Body(...)):
     return created_user_from_db
 
 @app.get("/api/user/{user_email}")
-async def get_user(user_email: str):
+async def get_user(user_email: EmailStr):
     # Fetch user from MongoDB
-    user = mongo_collection.find_one({"email": user_email})
+    user = mongo_collection.find_one({"email": user_email}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
