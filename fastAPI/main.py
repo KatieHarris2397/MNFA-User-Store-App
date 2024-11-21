@@ -24,29 +24,27 @@ neo4j_driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD)
 @app.post("/api/user/")
 async def create_user(user: dict):
     # Add user to MongoDB
-    user_id = mongo_collection.insert_one(user).inserted_id
-    print("type user_id: ", type(user_id))
-    user["id"] = str(user_id)
+    userObj = mongo_collection.insert_one(user)
     
     # Add user to Neo4j graph
     with neo4j_driver.session() as session:
         session.run(
-            "CREATE (u:User {id: $id, name: $name, email: $email})",
-            id=str(user_id), name=user.get("name"), email=user.get("email")
+            "CREATE (u:User {name: $name, email: $email})",
+            name=user.get("name"), email=user.get("email")
         )
     return {"message": "User created successfully", "user": user}
 
-@app.get("/api/user/{user_id}")
-async def get_user(user_id: str):
+@app.get("/api/user/{user_email}")
+async def get_user(user_email: str):
     # Fetch user from MongoDB
-    user = mongo_collection.find_one({"_id": ObjectId(user_id)})
+    user = mongo_collection.find_one({"email": user_email})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     # Fetch related graph data from Neo4j
     with neo4j_driver.session() as session:
         result = session.run(
-            "MATCH (u:User {id: $id}) RETURN u", id=user_id
+            "MATCH (u:User {email: $email}) RETURN u", email=user_email
         ).single()
         graph_data = result["u"] if result else {}
 

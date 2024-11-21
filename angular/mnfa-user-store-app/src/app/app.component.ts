@@ -26,8 +26,8 @@ export class AppComponent {
   }
 
   getUser() {
-    const userId = prompt('Enter User ID');
-    this.apiService.getUser(userId || '').subscribe((res) => {
+    event.preventDefault();
+    this.apiService.getUser(this.user.email || '').subscribe((res) => {
       this.userDetails = res;
     });
   }
