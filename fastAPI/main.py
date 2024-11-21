@@ -49,14 +49,15 @@ async def create_user(user: User = Body(...)):
     new_user = mongo_collection.insert_one(user.model_dump(by_alias=True, exclude=["id"]))
 
     created_user = mongo_collection.find_one({"_id": new_user.inserted_id})
+    created_user_from_db = User(**created_user)
     
     # Add user to Neo4j graph
     with neo4j_driver.session() as session:
         session.run(
             "CREATE (u:User {name: $name, email: $email})",
-            name=user.model_dump(by_alias=True).name, email=user.model_dump(by_alias=True).email
+            name=created_user_from_db.name, email=created_user_from_db.email
         )
-    return created_user
+    return created_user_from_db
 
 @app.get("/api/user/{user_email}")
 async def get_user(user_email: str):
