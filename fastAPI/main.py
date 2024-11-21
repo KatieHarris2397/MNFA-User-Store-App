@@ -29,7 +29,8 @@ neo4j_driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD)
 @app.post("/api/user/")
 async def create_user(user: dict):
     # Add user to MongoDB
-    user_id = UserId(mongo_collection.insert_one(user).inserted_id)
+    inserted_id = mongo_collection.insert_one(user).inserted_id
+    user_id = UserId(id=inserted_id)
     user["id"] = user_id.id
     
     # Add user to Neo4j graph
