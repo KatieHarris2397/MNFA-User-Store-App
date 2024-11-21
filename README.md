@@ -36,7 +36,7 @@ A simple user storing app to demonstrate a MongoDB-Neo4j-FastAPI-Angular Stack
    ```
 6. **Build Docker container for backend**:
    ```bash
-   docker build -t mean-fastapi-user-store:latest .
+   docker build -t mnfa-fastapi-user-store:latest .
    ```
 7. **Navigate to mongoDB folder**:
    ```bash
