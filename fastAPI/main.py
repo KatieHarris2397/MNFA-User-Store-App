@@ -7,7 +7,10 @@ import os
 app = FastAPI()
 
 # MongoDB Configuration
-MONGO_URI = "mongodb://" + os.getenv("MONGODB_HOST") + "/"
+MONGO_USERNAME = os.getenv("MONGODB_USERNAME")
+MONGO_PASSWORD = os.getenv("MONGODB_PASSWORD")
+MONGO_HOST = os.getenv("MONGODB_HOST")
+MONGO_URI = "mongodb://" + MONGO_USERNAME + ":" + MONGO_PASSWORD + "@" + MONGO_HOST + "/"
 mongo_client = MongoClient(MONGO_URI)
 mongo_db = mongo_client[os.getenv("MONGODB_DB")]
 mongo_collection = mongo_db["users"]
