@@ -53,8 +53,8 @@ async def create_user(user: User = Body(...)):
     # Add user to Neo4j graph
     with neo4j_driver.session() as session:
         session.run(
-            "CREATE (u:User {id: $id, name: $name, email: $email})",
-            id= created_user.id, name=user.get("name"), email=user.get("email")
+            "CREATE (u:User {name: $name, email: $email})",
+            name=user.get("name"), email=user.get("email")
         )
     return created_user
 
