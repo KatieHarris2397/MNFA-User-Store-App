@@ -3,13 +3,8 @@ from pymongo import MongoClient
 from neo4j import GraphDatabase
 
 import os
-from pydantic import BaseModel
-from pyobjectID import MongoObjectId
 
 app = FastAPI()
-
-class UserId(BaseModel):
-    id: MongoObjectId
 
 # MongoDB Configuration
 MONGO_USERNAME = os.getenv("MONGODB_USERNAME")
@@ -29,15 +24,15 @@ neo4j_driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD)
 @app.post("/api/user/")
 async def create_user(user: dict):
     # Add user to MongoDB
-    inserted_id = mongo_collection.insert_one(user).inserted_id
-    user_id = UserId(id=inserted_id)
-    user["id"] = user_id.id
+    user_id = mongo_collection.insert_one(user).inserted_id
+    print("type user_id: ", type(user_id))
+    user["id"] = str(user_id)
     
     # Add user to Neo4j graph
     with neo4j_driver.session() as session:
         session.run(
             "CREATE (u:User {id: $id, name: $name, email: $email})",
-            id=user_id.id, name=user.get("name"), email=user.get("email")
+            id=str(user_id), name=user.get("name"), email=user.get("email")
         )
     return {"message": "User created successfully", "user": user}
 
