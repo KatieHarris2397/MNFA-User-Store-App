@@ -1,0 +1,52 @@
+application:
+  template: 
+    name: "mongodb-neo4j-fastAPI-angular"
+    deploymentName: "My MNFA User Store"
+    registryLogin:
+      registry: ghcr.io
+      username: <Github username> # Your GitHub username
+      personalAccessToken: <Github Packages Read-Only PAT> # Your GitHub personal access token
+    pods:
+    - type: database
+      exposeOn80: false
+      name: mongoDB
+      tag: <ghcr.io/myLowercaseUsername/mnfa-mongo-user-store:v0.0.1> # Your generated Docker image
+      privateTag: true
+      vars:
+      - key: MONGO_INITDB_ROOT_USERNAME
+        value: mongo
+      - key: MONGO_INITDB_ROOT_PASSWORD
+        value: passw0rd
+      - key: MONGO_INITDB_DATABASE
+        value: mongo
+    - type: neo4j
+      exposeOn80: false
+      name: neo4j
+      tag: neo4j:5.23.0
+      vars:
+      - key: NEO4J_AUTH
+        value: neo4j/passw0rd
+    - type: fastAPI
+      exposeOn80: false
+      name: fastAPI
+      tag: <ghcr.io/myLowercaseUsername/mnfa-fastapi-user-store:v0.0.1> # Your generated Docker image
+      privateTag: true
+      vars:
+      - key: NEO4J_URL
+        value: NEO4J_URI # Provided by Nexlayer.  Used to retrieve the Neo4j URI
+      - key: NEO4J_USERNAME
+        value: neo4j
+      - key: NEO4J_PASSWORD
+        value: passw0rd
+      - key: MONGODB_URL
+        value: DATABASE_CONNECTION_STRING # Provided by Nexlayer.  Used to retrieve the URL needed to connect to database pod
+      - key: MONGODB_DB
+        value: mongo
+    - type: nginx
+      exposeOn80: true
+      name: nginx
+      tag: <ghcr.io/myLowercaseUsername/mnfa-angular-user-store:v0.0.1> # Your generated Docker image
+      privateTag: true
+      vars:
+      - key: EXPRESS_URL
+        value: BACKEND_CONNECTION_URL # Provided by Nexlayer.  Used to retrieve the URL of the site created
