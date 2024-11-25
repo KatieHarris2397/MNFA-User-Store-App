@@ -1,0 +1,87 @@
+name: On Tag, Build and Push MNFA Docker Images to GHCR
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write  # Required to push images to GHCR
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Log in to GitHub Container Registry
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 3: Convert repository owner to lowercase (docker image names must all be lowercase)
+      - name: Set repository owner lowercase
+        id: owner_lowercase
+        run: echo "owner_lowercase=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      # Step 4: Build the Angular app
+      - name: Install and Build Angular App
+        run: |
+          cd angular/mnfa-user-store-app
+          npm ci # Install dependencies (prefer ci for CI environments)
+          npm run build # Build the Angular app
+          cd ../../ # Return to home directory
+      # Step 5: Get the tag associated with push for the angular image
+      - name: Extract metadata for Angular Docker image
+        id: angular_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.owner_lowercase }}/mnfa-angular-user-store
+          tags: |
+            type=ref,event=tag
+      # Step 6: Build and Push Angular Docker Image
+      - name: Build and Push Angular App Image
+        uses: docker/build-push-action@v5
+        with:
+          context: angular/mnfa-user-store-app
+          push: true
+          tags: ${{ steps.angular_meta.outputs.tags }}
+
+      # Step 7: Get the tag associated with push for the fastAPI image
+      - name: Extract metadata for FastAPI Docker image
+        id: fastapi_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.owner_lowercase }}/mnfa-fastapi-user-store
+          tags: |
+            type=ref,event=tag
+      # Step 8: Build and Push FastAPI Docker Image
+      - name: Build and Push FastAPI Image
+        uses: docker/build-push-action@v5
+        with:
+          context: fastAPI
+          push: true
+          tags: ${{ steps.fastapi_meta.outputs.tags }}
+
+      # Step 9: Get the tag associated with push for the mongo image
+      - name: Extract metadata for Mongo Docker image
+        id: mongo_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.owner_lowercase }}/mnfa-mongo-user-store
+          tags: |
+            type=ref,event=tag
+      # Step 10: Build and Push Mongo Docker Image
+      - name: Build and Push Mongo Image
+        uses: docker/build-push-action@v5
+        with:
+          context: mongoDB
+          push: true
+          tags: ${{ steps.mongo_meta.outputs.tags }}
