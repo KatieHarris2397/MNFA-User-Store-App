@@ -22,13 +22,13 @@ export class AppComponent {
 
   createUser(event: Event) {
     event.preventDefault();
-    this.apiService.createUser(this.user).subscribe((res) => console.log(res));
+    this.apiService.createUser(this.user).subscribe((response) => console.log(response));
   }
 
   getUser(event: Event) {
     event.preventDefault();
-    this.apiService.getUser(this.user.email || '').subscribe((res) => {
-      this.userDetails = res;
+    this.apiService.getUser(this.user.email || '').subscribe((response) => {
+      this.userDetails = response;
     });
   }
 }
